@@ -385,6 +385,10 @@ sup.ex { font-size: 0.68em; vertical-align: 0.62em; line-height: 0; margin-left:
 .jt th.on { background: #ff6fa0; color: #000; }
 .jt td.hit { background: #ff6fa0; color: #000; font-weight: bold; }
 .jtnote { color: #aaa; font-size: 12px; }
+#game.tblq #problem .expr { font-size: 40px; line-height: 1.5; }   /* 表の 問題も 式は 表の ない 問題と 同じ 大きさ（11-21 先生） */
+#game.tblq #problem .expr.long { font-size: 34px; }
+#game.tblq #problem .expr.exam { font-size: 26px; }
+@media (max-width: 360px) { #game.tblq #problem .expr { font-size: 34px; } #game.tblq #problem .expr.long { font-size: 29px; } #game.tblq #problem .expr.exam { font-size: 20px; } }
 #tbl.rev .jtnote { display: none; }
 </style>
 </head>
@@ -1131,6 +1135,7 @@ function resizePlane() {
 }
 function draw() {   // 表の 問題だけ 図の 場所に 表（4行 × 6列）を 出す。答えた あとは 交わる ところを ピンクに
   const q = p(), t = q && q.table, box = $('tbl');
+  gameEl.classList.toggle('tblq', !!t);   // 表の 問題も 問題の 式を 大きく（11-21 先生）
   if (!t) { gameEl.classList.add('nofig'); box.innerHTML = ''; return; }
   gameEl.classList.remove('nofig'); canvas.style.display = 'none';
   const rev = state.reveal; box.classList.toggle('rev', !!rev);   // 答えた あとは 注意書きを 出さない（説明の 窓が 高く なる）
