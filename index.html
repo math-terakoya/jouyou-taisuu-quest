@@ -675,7 +675,7 @@ function texts(q) {
   const ask = keta ? K.X + ' は 何桁の 整数か' : K.X + ' を 小数で 表すと、小数第何位に はじめて 0 で ない 数字が 出るか';
   if (!two) {
     return [['▼ ① n は？（n は 整数）', K.giv + '\n' + K.ineq + '\n' + K.val],
-      [K.B.given + ' と する。' + (K.B.how ? '\n（' + K.B.how + '）\n' : '') + ask + '。\nまず ' + K.frame + ' を みたす 整数 n を 求めよ。'], K.ineq];
+      [K.B.given + ' と する。' + (K.B.how ? '\n（' + K.B.how + '）\n' : '') + ask + '。\nまず ' + K.frame + ' を みたす 整数 n を 求めよ。\n' + K.val], K.ineq];   // 問題集の ことばでも かけ算は すませて 見せる（11-21 先生：すぐ 判断できるか）
   }
   const fin = keta ? pw(10, q.n) + ' ≦ ' + K.X + ' ＜ ' + pw(10, q.n + 1) : pw(10, MI + (q.n + 1)) + ' ≦ ' + K.X + ' ＜ ' + pw(10, MI + q.n);
   return [[keta ? '▼ ② 何桁？' : '▼ ② 小数第何位？', fin + '\n' + (keta ? K.X + ' は 何桁？' : 'はじめて 0 で ない 数字は？')],
@@ -866,6 +866,20 @@ function likeOK(q, w, types) {   // 同じ 形で、同じ まちがいの 選�
   if (STEPS.includes(q.mode)) makeOptions(Object.assign({}, q, { st: 2 }), fixed).forEach(o => o.types.forEach(t => have.add(t)));
   return types.every(t => have.has(t));
 }
+// 正解の 位置が 3回 続かない ように（2回 続いたら 次は 別の 位置へ。11-21 先生）。連れ問は ①・② を それぞれ 1回と 数える
+function spreadPos(p, ctx, rng) {
+  if (!ctx.pos) ctx.pos = [];
+  (p.steps ? p.steps.map(s => s.options) : [p.options]).forEach(opts => {
+    let i = opts.findIndex(o => o.correct);
+    const L = ctx.pos.slice(-2);
+    if (L.length === 2 && L[0] === L[1] && i === L[0] && opts.length > 1) {
+      const others = opts.map((o, k) => k).filter(k => k !== i), j = others[Math.floor(rng() * others.length)];
+      [opts[i], opts[j]] = [opts[j], opts[i]]; i = j;
+    }
+    ctx.pos.push(i); if (ctx.pos.length > 6) ctx.pos.shift();
+  });
+  if (p.steps) p.options = p.steps[p.stepIdx || 0].options;
+}
 const MID_HP = 2, FINAL_HP = NORM_CH.length;
 const zakoHP = L => 1 + Math.floor(L / 2);
 const midHP = L => 7 + Math.floor(L / 2);
@@ -886,7 +900,7 @@ function makeSlots(ch, rng, opt = {}) {
   const play = opt.play === undefined ? ri(rng, 0, PLAYS - 1) : Math.min(opt.play, PLAYS - 1);
   return C.plays[play].map(f => (f === 'MAB' ? { lv: C.lv, form: C.mab.form, mab: true } : { lv: C.lv, form: f })).concat(mid).map(s => Object.assign(s, { play }));   // play：★の 何回めか（1回めは やさしい 形だけ）
 }
-function newContext() { return { recent: [], weak: {}, log: [] }; }
+function newContext() { return { recent: [], weak: {}, log: [], pos: [] }; }
 function makeProblem(slot, ctx, rng) {
   const w = ctx.weak[slot.lv];
   const forms = slot.form ? [slot.form] : CHAPTERS[slot.lv - 1].forms;
@@ -898,6 +912,7 @@ function makeProblem(slot, ctx, rng) {
   for (let i = 0; i < 400 && !prm; i++) { const c = gen(); if (fresh(c)) prm = c; }
   if (!prm) prm = gen();
   const p = build(prm, rng, { boss: !!slot.boss });
+  spreadPos(p, ctx, rng);
   if (slot.mab) { p.mab = true; p.label = '▼ まぼろしの 問題'; if (p.steps) p.steps[0].label = p.label; }
   p.target = { lv: target };
   p.key = JSON.stringify(prm);
@@ -922,7 +937,7 @@ G.QuestCore = {
   FIG, lg, TAP, INTRO, DATA_V, migrateProg, migrateZk, hasHint, hintParts, hintLines, useStep, STEPS,
   CHAPTERS, NORM_CH, FORM_LV, MONSTERS, monsterOf, zukanAfter, zukanCount, GEN, genPrm, makeOptions, build, judge, classify,
   describe, masterText, likeOK, TYPE_TEXT, MASTER_TEXT, PLAYS, MID_HP, FINAL_HP, zakoHP, midHP, finalHP, CRIT, comboBonus, damage, makeSlots,
-  newContext, makeProblem, record, mulberry32, reasonLines, texts, tableOf, T4, num, BASES, SBASES, goodK,
+  newContext, makeProblem, record, mulberry32, reasonLines, texts, tableOf, T4, num, BASES, SBASES, goodK, spreadPos,
 };
 })(typeof window !== 'undefined' ? window : this);
 </script>
